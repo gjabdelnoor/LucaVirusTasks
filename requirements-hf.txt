@@ -1,0 +1,18 @@
+# Adapter dependencies. Install a CUDA-appropriate PyTorch separately.
+transformers==4.41.2
+tokenizers==0.19.1
+numpy==1.26.4
+safetensors>=0.4.3
+accelerate==0.31.0
+# Original binary head / run.py imports:
+biopython
+scikit-learn
+scipy
+matplotlib
+pynvml
+requests
+fair-esm
+subword-nmt
+tensorboardX
+datasets==2.19.0
+pyarrow==16.1.0

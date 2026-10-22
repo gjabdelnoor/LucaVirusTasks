@@ -27,18 +27,12 @@ try:
     from utils import set_seed, to_device, get_labels, get_parameter_number, \
         gene_seq_replace, clean_seq_luca, seq_type_is_match_seq, available_gpu_id, \
         download_trained_checkpoint_lucavirus, calc_emb_filename_by_seq_id
-    from models.lucaone_gplm import LucaGPLM
-    from models.lucaone_gplm_config import LucaGPLMConfig
-    from models.alphabet import Alphabet
 except ImportError as e:
     from src.args import Args
     from src.file_operator import fasta_reader, csv_reader, tsv_reader
     from src.utils import set_seed, to_device, get_labels, get_parameter_number, \
         gene_seq_replace, clean_seq_luca, seq_type_is_match_seq, available_gpu_id, \
         download_trained_checkpoint_lucavirus, calc_emb_filename_by_seq_id
-    from src.llm.lucavirus.models.lucaone_gplm import LucaGPLM
-    from src.llm.lucavirus.models.lucaone_gplm_config import LucaGPLMConfig
-    from src.llm.lucavirus.models.alphabet import Alphabet
 
 from transformers import AutoTokenizer, PretrainedConfig, BertTokenizer
 from collections import OrderedDict
@@ -65,6 +59,15 @@ def load_model(
     :param embedding_inference:
     :return:
     """
+    try:
+        from .models.lucaone_gplm import LucaGPLM
+        from .models.lucaone_gplm_config import LucaGPLMConfig
+        from .models.alphabet import Alphabet
+    except ImportError:
+        from src.llm.lucavirus.models.lucaone_gplm import LucaGPLM
+        from src.llm.lucavirus.models.lucaone_gplm_config import LucaGPLMConfig
+        from src.llm.lucavirus.models.alphabet import Alphabet
+
     strs = model_dirpath.split("llm/models/")
     if len(strs) > 1:
         ss = model_dirpath.split("/")
@@ -328,6 +331,17 @@ def predict_embedding(
 
     global lucavirus_global_log_filepath, lucavirus_global_model_dirpath, lucavirus_global_args_info, \
         lucavirus_global_model_config, lucavirus_global_model_version, lucavirus_global_model, lucavirus_global_tokenizer
+    try:
+        from .hf_embedding import is_hf_checkpoint, predict_embedding_hf
+    except ImportError:
+        from src.llm.lucavirus.hf_embedding import is_hf_checkpoint, predict_embedding_hf
+    if is_hf_checkpoint(llm_dirpath):
+        lucavirus_global_model_dirpath = os.path.abspath(os.path.expanduser(llm_dirpath))
+        return predict_embedding_hf(
+            llm_dirpath, sample, trunc_type, embedding_type, repr_layers,
+            truncation_seq_length, device, matrix_add_special_token, fp16,
+        )
+
     assert "bos" in embedding_type \
            or "representations" in embedding_type \
            or "matrix" in embedding_type \

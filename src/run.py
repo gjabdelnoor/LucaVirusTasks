@@ -389,6 +389,8 @@ def get_args():
                         help="hidden size for classifier.")
 
     # llm
+    parser.add_argument("--llm_hf_dir", default=None, type=str,
+                        help="Local trusted Hugging Face LucaVirus checkpoint; overrides legacy llm paths.")
     parser.add_argument("--llm_dir", default=None, type=str,
                         help="llm dir.")
     parser.add_argument("--llm_type", default=None, type=str,
@@ -965,7 +967,12 @@ def main():
 
     # create model
     model_config, model_class, model, seq_subword, seq_tokenizer_class, seq_tokenizer, label_list = get_model(args)
-    if "luca_separated" in args.llm_type:
+    if args.llm_hf_dir:
+        from llm.lucavirus.hf_embedding import is_hf_checkpoint
+        llm_dirpath = os.path.abspath(os.path.expanduser(args.llm_hf_dir))
+        if args.llm_type != "lucavirus" or not is_hf_checkpoint(llm_dirpath):
+            raise ValueError("--llm_hf_dir requires --llm_type lucavirus and a local HF LucaVirus checkpoint")
+    elif "luca_separated" in args.llm_type:
         llm_version_strs = args.llm_version.split("-")
         llm_time_str_strs = args.llm_time_str.split("-")
         llm_step_strs = args.llm_step.split("-")
